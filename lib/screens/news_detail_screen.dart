@@ -21,6 +21,20 @@ class NewsDetailScreen extends StatelessWidget {
                   ? Image.network(
                       article.urlToImage!,
                       fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: Colors.grey[200],
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          ),
+                        );
+                      },
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
                           color: Colors.grey[300],
@@ -55,44 +69,53 @@ class NewsDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Source and Date Row
-                  Row(
-                    children: [
-                      if (article.sourceName != null) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            article.sourceName!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.blue[700],
-                              fontWeight: FontWeight.w600,
+                  // Source and Date Row with proper overflow handling
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (article.sourceName != null) ...[
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.blue[50],
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                article.sourceName!,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.blue[700],
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                      ],
-                      Expanded(
-                        child: Text(
-                          _formatDate(article.publishedAt),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
+                          const SizedBox(width: 12),
+                        ],
+                        Expanded(
+                          child: Text(
+                            _formatDate(article.publishedAt),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
 
-                  // Title
+                  // Title with proper text wrapping
                   Text(
                     article.title,
                     style: const TextStyle(
@@ -104,30 +127,37 @@ class NewsDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  // Author
-                  if (article.author != null) ...[
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 16,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'By ${article.author}',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[700],
-                            fontStyle: FontStyle.italic,
+                  // Author with proper overflow handling
+                  if (article.author != null && article.author!.isNotEmpty) ...[
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.person_outline,
+                            size: 16,
+                            color: Colors.grey[600],
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'By ${article.author}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[700],
+                                fontStyle: FontStyle.italic,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 20),
                   ],
 
-                  // Description
+                  // Description with proper text wrapping
                   Text(
                     article.description,
                     style: const TextStyle(
@@ -183,18 +213,5 @@ class NewsDetailScreen extends StatelessWidget {
     // ScaffoldMessenger.of(context).showSnackBar(
     //   SnackBar(content: Text('Opening: $url')),
     // );
-  }
-
-  void _shareArticle(BuildContext context) {
-    final text =
-        '${article.title}\n\n${article.description}\n\nRead more: ${article.url}';
-
-    // For now, just copy to clipboard
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Article link copied to clipboard'),
-        duration: Duration(seconds: 2),
-      ),
-    );
   }
 }
